@@ -1,10 +1,10 @@
-String incommingByte = "";
 #include <Servo.h>
 #include <SoftwareSerial.h>
 #include <Adafruit_NeoPixel.h> // Neopixel을 사용하기 위해서 라이브러리를 불러옵니다.
       
 Servo myservo;
 
+String incommingByte = "";
 // Which pin on the Arduino is connected to the NeoPixels?
 int LEDPIN = 12;
 // How many NeoPixels are attached to the Arduino?
@@ -14,8 +14,10 @@ int delayval = 500; // delay for half a second
 
 //======================
 char check = 0; 
-String inputStr{""};
-bool completed = false;
+String applicationInput{""};
+String gestureInput{""};
+bool applicationCompleted = false;
+bool gestureCompleted = false;
 int val = 0;
 bool isGestureOn = false;
 
@@ -24,30 +26,30 @@ void setup() {
   Serial.begin(9600);
   Serial.println("Hello!");
   Serial1.begin(9600); //PC
-  Serial1.setTimeout(100);
+  Serial1.setTimeout(10);
   Serial2.begin(9600); //application
-  Serial2.setTimeout(100);
   //=====
   myservo.attach(9);
   pixels.begin(); // This initializes the NeoPixel library.
 }
  
 void loop() {
- inputStr = "";
+ applicationInput = "";
+ gestureInput = "";
   // put your main code here, to run repeatedly:
   
   while(Serial2.available()) {
     char data = (char)Serial2.read();
-    inputStr += data;
+    applicationInput += data;
 
     if(data == '\n'){
-      completed = true;
+      applicationCompleted = true;
     }
   }
 
-  if(completed){
-    completed = false;
-    int val = inputStr.toInt();
+  if(applicationCompleted){
+    applicationCompleted = false;
+    int val = applicationInput.toInt();
 
     if (val == 1000){
       Serial.print("gesture on");
@@ -63,11 +65,17 @@ void loop() {
   
   if(isGestureOn){
     while(Serial1.available()) {
-        int data = 0;
-        incommingByte = Serial1.readString();
-        data = incommingByte.toInt();
-        if (data <= 0) {
-          switch(data) {
+        char data = (char)Serial1.read();
+        gestureInput += data;
+
+        if(data == '\n'){
+          gestureCompleted = true;
+        }
+    }
+    if (gestureCompleted) {
+      gestureCompleted = false;
+      int val = gestureInput.toInt();
+          switch(val) {
           case 0: //STOP
           myservo.write(90);
           break;
@@ -120,16 +128,10 @@ void loop() {
             }
           break;
           }
-
-        }
-        else {
-          pixels.setBrightness(data-1);
+          Serial.println(val);
+          pixels.setBrightness(val-1);
           pixels.show();
         }
-    }
-
-
-      
   }
   if(!isGestureOn){
     Serial1.read();

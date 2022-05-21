@@ -97,9 +97,8 @@ while cap.isOpened():
 
                 dis = round(temp*500)
                 if dis > 255:
-                    
-                    dis = 255
-                if dis < 5:
+                    dis = 256
+                if dis < 3:
                     dis = 1
             
 
@@ -108,8 +107,8 @@ while cap.isOpened():
                     fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1,
                     color=255, thickness=2)
                 cv2.putText(img, text=rps_gesture[idx].upper(), org=(int(res.landmark[0].x * img.shape[1]), int(res.landmark[0].y * img.shape[0] + 20)), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(255, 255, 255), thickness=2)
-                print(str(dis).encode('utf-8'))
-                ser.write(str(dis).encode('utf-8'))
+                print((str(dis) + '\n').encode('utf-8'))
+                ser.write((str(dis) + '\n').encode('utf-8'))
 
             else:
                 create_idx[-idx]+=1 
@@ -121,7 +120,7 @@ while cap.isOpened():
                         if idx == -8 : 
                             temp = fdist(res.landmark[4].x, res.landmark[4].y, res.landmark[8].x, res.landmark[8].y)
 
-                            dis = round(temp*500)
+                            dis = round(temp*250)
                             if dis > 255:
                                 dis = 255
                             
@@ -132,7 +131,7 @@ while cap.isOpened():
                                 fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1,
                                 color=255, thickness=2)
                             cv2.putText(img, text=rps_gesture[idx].upper(), org=(int(res.landmark[0].x * img.shape[1]), int(res.landmark[0].y * img.shape[0] + 20)), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(255, 255, 255), thickness=2)
-                            ser.write(str(round(dis)).encode('utf-8'))
+                            ser.write((str(round(dis)) + '\n').encode('utf-8'))
                         
 
                         else:
@@ -140,7 +139,7 @@ while cap.isOpened():
                                 cv2.putText(img, text=rps_gesture[idx].upper(), org=(int(res.landmark[0].x * img.shape[1]), int(res.landmark[0].y * img.shape[0] + 20)), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(255, 255, 255), thickness=2)
 
                             
-                                data =str(idx).encode('utf-8')
+                                data = (str(idx) + '\n').encode('utf-8')
                                 
                                 
                                 if before_data != idx: 
