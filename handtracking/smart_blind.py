@@ -3,6 +3,7 @@ import mediapipe as mp
 import numpy as np
 import serial
 import math
+import time
 
 def fdist(x1,y1,x2,y2):
     return math.sqrt(math.pow(x1 - x2,2)) + math.sqrt(math.pow(y1 - y2,2))
@@ -95,10 +96,10 @@ while cap.isOpened():
             if idx == -8 : 
                 temp = fdist(res.landmark[4].x, res.landmark[4].y, res.landmark[8].x, res.landmark[8].y)
 
-                dis = round(temp*500)
+                dis = round(temp*3000)
                 if dis > 255:
                     dis = 256
-                if dis < 3:
+                if dis < 5:
                     dis = 1
             
 
@@ -109,6 +110,7 @@ while cap.isOpened():
                 cv2.putText(img, text=rps_gesture[idx].upper(), org=(int(res.landmark[0].x * img.shape[1]), int(res.landmark[0].y * img.shape[0] + 20)), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(255, 255, 255), thickness=2)
                 print((str(dis) + '\n').encode('utf-8'))
                 ser.write((str(dis) + '\n').encode('utf-8'))
+                
 
             else:
                 create_idx[-idx]+=1 

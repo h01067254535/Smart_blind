@@ -65,16 +65,14 @@ void loop() {
   
   if(isGestureOn){
     while(Serial1.available()) {
-        char data = (char)Serial1.read();
-        gestureInput += data;
-
-        if(data == '\n'){
-          gestureCompleted = true;
-        }
-    }
-    if (gestureCompleted) {
+        delay(85);
+        String data = Serial1.readString();
+        Serial.println(data);
+      
+    
       gestureCompleted = false;
-      int val = gestureInput.toInt();
+      int val = data.toInt();
+          
           switch(val) {
           case 0: //STOP
           myservo.write(90);
@@ -128,7 +126,7 @@ void loop() {
             }
           break;
           }
-          Serial.println(val);
+          
           pixels.setBrightness(val-1);
           pixels.show();
         }
