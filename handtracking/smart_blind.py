@@ -96,7 +96,7 @@ while cap.isOpened():
             if idx == -8 : 
                 temp = fdist(res.landmark[4].x, res.landmark[4].y, res.landmark[8].x, res.landmark[8].y)
 
-                dis = round(temp*3000)
+                dis = round(temp*500)
                 if dis > 255:
                     dis = 256
                 if dis < 5:
