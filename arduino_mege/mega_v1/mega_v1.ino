@@ -3,6 +3,8 @@
 #include <SoftwareSerial.h>
 #include <Adafruit_NeoPixel.h> // Neopixel을 사용하기 위해서 라이브러리를 불러옵니다.
 #include <swRTC.h>
+#include <time.h> 
+#define total_time 60
 
 using namespace std;
 
@@ -20,6 +22,11 @@ int LEDPIN = 12;
 int NUMPIXELS = 60;
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, LEDPIN, NEO_GRBW + NEO_KHZ800);
 
+double inc_t = 100.0/(double)total_time;
+int blind_h = 0;
+double time_delay = 0; 
+int current_h = 0;
+
 //======================
 char check = 0;
 String applicationInput{""};
@@ -35,7 +42,23 @@ vector<String> days;
 
 void OperateBlind(int percentage)
 {
-    
+  Serial.println(inc_t);
+  time_delay = percentage/inc_t;
+  Serial.println(time_delay);
+  blind_h = abs(percentage - current_h);
+  if (current_h < percentage){
+     myservo.write(0);
+     //current_h += blind_h;
+     //Serial.println(current_h);
+  }
+  else{
+    myservo.write(180);
+    //current_h -= blind_h;
+  }
+  current_h = percentage;
+  Serial.println(current_h);
+  delay(time_delay*1000);
+  myservo.write(90);
 }
 
 int GetDayOfWeek(int y, int m, int d)
@@ -86,7 +109,7 @@ void loop()
     int currHour = rtc.getHours();
     int currMinute = rtc.getMinutes();
     int currSecond = rtc.getSeconds();
-
+    Serial.println(currSecond);
     int dow = GetDayOfWeek(rtc.getYear(), rtc.getMonth(), rtc.getDay());
 
     while (Serial2.available())
@@ -139,11 +162,12 @@ void loop()
             percentage = applicationInput.toInt();
             Serial.print("percentage ");
             Serial.println(percentage);
+            OperateBlind(percentage);
+            
         }
 
         else if (applicationInput.length() > 5)
         {
-            Serial.println("czg");
             int firstIdx = applicationInput.indexOf(',');
             int secondIdx = applicationInput.indexOf(',', firstIdx + 1);
             int strLength = applicationInput.length();
@@ -167,7 +191,7 @@ void loop()
 
     for (int i = 0; i < percentages.size(); i++)
     {
-        Serial.println("for");
+        
         accordTime = false;
         accordDay = false;
 
