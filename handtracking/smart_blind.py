@@ -15,7 +15,7 @@ create_idx = [0,0,0,0,0,0,0,0]
 rps_gesture = {0:'stop', -1:'one', -2:'two', -3:'three', -4:'four', -5:'five', -6:'up', -7:'down', -8:'brightness control'}
 
 before_data = 0
-ser = serial.Serial('COM5',9600)
+ser = serial.Serial('COM12',9600)
 print("아두이노아 통신 시작")
 # MediaPipe hands model
 
@@ -37,7 +37,7 @@ knn = cv2.ml.KNearest_create()
 knn.train(angle, cv2.ml.ROW_SAMPLE, label)
 
 # 웹캠을 열어준다. pc의 경우 0
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 
 
 while cap.isOpened():

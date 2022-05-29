@@ -1,20 +1,15 @@
+#include <ArduinoSTL.h>
 #include <Servo.h>
 #include <SoftwareSerial.h>
 #include <Adafruit_NeoPixel.h> // Neopixel을 사용하기 위해서 라이브러리를 불러옵니다.
-#include <Vector.h>
 #include <swRTC.h>
+
+using namespace std;
+
 swRTC rtc;
 String inputStr;
 bool accordTime{false}, accordDay{false};
 int percentage;
-
-const int ELEMENT_COUNT_MAX = 50;
-typedef Vector<int> Percentages;
-typedef Vector<String> Times;
-typedef Vector<String> Days;
-Percentages percentages;
-Times times;
-Days days;
 
 Servo myservo;
 
@@ -34,9 +29,13 @@ bool gestureCompleted = false;
 int val = 0;
 bool isGestureOn = false;
 
+vector<int> percentages;
+vector<String> times;
+vector<String> days;
+
 void OperateBlind(int percentage)
 {
-    Serial.println("operate blind");
+    
 }
 
 int GetDayOfWeek(int y, int m, int d)
@@ -71,16 +70,6 @@ void setup()
     myservo.attach(9);
     pixels.begin(); // This initializes the NeoPixel library.
 
-    int storage_int[ELEMENT_COUNT_MAX];
-    String storage_times[ELEMENT_COUNT_MAX];
-    String storage_days[ELEMENT_COUNT_MAX];
-    percentages.setStorage(storage_int);
-    times.setStorage(storage_times);
-    days.setStorage(storage_days);
-    percentages.clear();
-    times.clear();
-    days.clear();
-
     rtc.stopRTC();
     rtc.setTime(20, 0, 45);
     rtc.setDate(22, 5, 2022);
@@ -99,42 +88,18 @@ void loop()
     int currSecond = rtc.getSeconds();
 
     int dow = GetDayOfWeek(rtc.getYear(), rtc.getMonth(), rtc.getDay());
-    String dowStr = "";
-
-    switch (dow)
-    {
-    case 0:
-        dowStr = "일";
-        break;
-    case 1:
-        dowStr = "월";
-        break;
-    case 2:
-        dowStr = "화";
-        break;
-    case 3:
-        dowStr = "수";
-        break;
-    case 4:
-        dowStr = "목";
-        break;
-    case 5:
-        dowStr = "금";
-        break;
-    case 6:
-        dowStr = "토";
-        break;
-    }
 
     while (Serial2.available())
     {
         char data = (char)Serial2.read();
-        applicationInput += data;
-
         if (data == '\n')
         {
             applicationCompleted = true;
+            break;
         }
+        applicationInput += data;
+
+        delay(50);
     }
 
     if (applicationCompleted)
@@ -160,12 +125,16 @@ void loop()
             Serial.print("idx : ");
             Serial.println(idx);
 
-            percentages.remove(idx);
-            times.remove(idx);
-            days.remove(idx);
+            percentages.erase(percentages.begin() + idx);
+            times.erase(times.begin() + idx);
+            days.erase(days.begin() + idx);
+
+            cout << percentages.size() << '\n';
+            cout << times.size() << '\n';
+            cout << days.size() << '\n';
         }
 
-        else if (applicationInput.length() <= 3)
+        else if (applicationInput.length() <= 3) //percentage of blind 
         {
             percentage = applicationInput.toInt();
             Serial.print("percentage ");
@@ -174,6 +143,7 @@ void loop()
 
         else if (applicationInput.length() > 5)
         {
+            Serial.println("czg");
             int firstIdx = applicationInput.indexOf(',');
             int secondIdx = applicationInput.indexOf(',', firstIdx + 1);
             int strLength = applicationInput.length();
@@ -188,19 +158,16 @@ void loop()
             times.push_back(str2);
             days.push_back(str3);
 
-            Serial.print("percentage : ");
-            Serial.println(val);
-            Serial.print("time : ");
-            Serial.println(str2);
-            Serial.print("day : ");
-            Serial.println(str3);
+            cout << percentages.size() << '\n';
+            cout << times.size() << '\n';
+            cout << days.size() << '\n';
         }
     }
     // Serial –> Data –> BT
 
-    int vectorSize = percentages.size();
-    for (int i = 0; i < vectorSize; i++)
+    for (int i = 0; i < percentages.size(); i++)
     {
+        Serial.println("for");
         accordTime = false;
         accordDay = false;
 
@@ -211,20 +178,19 @@ void loop()
         {
             accordTime = true;
         }
-        //    if(accordTime){
-        //      Serial.println("Accord Time");
-        //      for(int j=0;j<days[i].length();j++){
-        //        if((String)days[i][j] == dowStr){
-        //          Serial.println("Accord Day");
-        //          accordDay = true;
-        //        }
-        //      }
-        //    }
-        //    if(accordTime and accordDay){
-        //      OperateBlind(percentages[i]);
-        //    }
+        if(accordTime){
+          Serial.println("Accord Time");
+          for(int j=0;j<days[i].length();j++){
+            if(((String)(days[i][j])).toInt() == dow){
+              Serial.println("Accord Day");
+              accordDay = true;
+            }
+          }
+        }
+        if(accordTime and accordDay){
+          OperateBlind(percentages[i]);
+        }
     }
-
     if (isGestureOn)
     {
         while (Serial1.available())
@@ -294,22 +260,16 @@ void loop()
                     pixels.show();
                 }
                 break;
-            }
-
-            pixels.setBrightness(val - 1);
-            pixels.show();
+            
+            default:
+              pixels.setBrightness(val - 1);
+              pixels.show();
         }
+       }
     }
     if (!isGestureOn)
     {
         Serial1.read();
     }
-
-    if (Serial.available())
-    {
-
-        Serial1.write(Serial.read());
-    }
     delay(50);
-    applicationInput = "";
 }
