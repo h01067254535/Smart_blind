@@ -4,7 +4,7 @@
 #include <Adafruit_NeoPixel.h> // Neopixel을 사용하기 위해서 라이브러리를 불러옵니다.
 #include <swRTC.h>
 #include <time.h> 
-#define total_time 60
+#define total_time 52
 
 using namespace std;
 
@@ -12,7 +12,11 @@ swRTC rtc;
 String inputStr;
 bool accordTime{false}, accordDay{false};
 int percentage;
-
+int start_time;
+int end_time;
+int working_time;
+bool check = true;
+bool isUp;
 Servo myservo;
 
 String incommingByte = "";
@@ -28,7 +32,6 @@ double time_delay = 0;
 int current_h = 0;
 
 //======================
-char check = 0;
 String applicationInput{""};
 String gestureInput{""};
 bool applicationCompleted = false;
@@ -42,20 +45,21 @@ vector<String> days;
 
 void OperateBlind(int percentage)
 {
-  Serial.println(inc_t);
-  time_delay = percentage/inc_t;
+  time_delay = abs(percentage-current_h)/inc_t;
+  Serial.print("time_delay : ");
   Serial.println(time_delay);
-  blind_h = abs(percentage - current_h);
   if (current_h < percentage){
-     myservo.write(0);
+     myservo.write(180);
      //current_h += blind_h;
      //Serial.println(current_h);
   }
   else{
-    myservo.write(180);
+    myservo.write(0);
     //current_h -= blind_h;
+    delay(750);
   }
   current_h = percentage;
+  Serial.print("curr_h-app : ");
   Serial.println(current_h);
   delay(time_delay*1000);
   myservo.write(90);
@@ -91,6 +95,7 @@ void setup()
     Serial2.begin(9600); // application
     //=====
     myservo.attach(9);
+    myservo.write(90);
     pixels.begin(); // This initializes the NeoPixel library.
 
     rtc.stopRTC();
@@ -109,7 +114,6 @@ void loop()
     int currHour = rtc.getHours();
     int currMinute = rtc.getMinutes();
     int currSecond = rtc.getSeconds();
-    Serial.println(currSecond);
     int dow = GetDayOfWeek(rtc.getYear(), rtc.getMonth(), rtc.getDay());
 
     while (Serial2.available())
@@ -127,41 +131,30 @@ void loop()
 
     if (applicationCompleted)
     {
-        Serial.println(applicationInput);
         applicationCompleted = false;
         int val = applicationInput.toInt();
 
         if (val == 1000)
         {
-            Serial.print("gesture on");
             isGestureOn = true;
         }
         else if (val == 2000)
         {
-            Serial.print("gesture off");
             isGestureOn = false;
         }
 
         else if (applicationInput.startsWith("delete"))
         {
             int idx = ((String)applicationInput[applicationInput.length() - 1]).toInt();
-            Serial.print("idx : ");
-            Serial.println(idx);
 
             percentages.erase(percentages.begin() + idx);
             times.erase(times.begin() + idx);
             days.erase(days.begin() + idx);
-
-            cout << percentages.size() << '\n';
-            cout << times.size() << '\n';
-            cout << days.size() << '\n';
         }
 
         else if (applicationInput.length() <= 3) //percentage of blind 
         {
             percentage = applicationInput.toInt();
-            Serial.print("percentage ");
-            Serial.println(percentage);
             OperateBlind(percentage);
             
         }
@@ -181,17 +174,12 @@ void loop()
             percentages.push_back(val);
             times.push_back(str2);
             days.push_back(str3);
-
-            cout << percentages.size() << '\n';
-            cout << times.size() << '\n';
-            cout << days.size() << '\n';
         }
     }
     // Serial –> Data –> BT
 
     for (int i = 0; i < percentages.size(); i++)
     {
-        
         accordTime = false;
         accordDay = false;
 
@@ -229,16 +217,49 @@ void loop()
             switch (val)
             {
             case 0: // STOP
-                myservo.write(90);
-                break;
+                if(!check) {
+                  end_time = rtc.getSeconds();
+                  myservo.write(90);
+                  check = true;
+                  if (end_time>start_time) {
+                    working_time = end_time-start_time;
+                  }
+                  else {
+                    working_time = end_time + 60 - start_time;  
+                  }
+                  if(isUp) {
+                    current_h = current_h - working_time*2;
+                    if(current_h < 0) current_h = 0;
+                  }
+                  else {
+                    current_h = current_h + working_time*2;
+                    if(current_h > 100) current_h = 100;
+                  }
+                  Serial.print("curr_h-ges " );
+                  Serial.println(current_h);
+                  Serial.print("working time-ges " );
+                  Serial.println(working_time);
+                  break;
+                }
+           
 
-            case -6:
-                myservo.write(0);
-                break;
+            case -6: //up 
+                if(check) {
+                  check = false;
+                  start_time = rtc.getSeconds();
+                  myservo.write(0);
+                  isUp = true;
+                  break;
+                 }
 
             case -7:
-                myservo.write(180);
-                break;
+                if(check) {
+                  check = false;
+                  start_time = rtc.getSeconds();
+                  myservo.write(180);
+                  break;
+                  isUp = false;
+                 }
 
             case -1:
                 pixels.setBrightness(10);

@@ -37,7 +37,7 @@ knn = cv2.ml.KNearest_create()
 knn.train(angle, cv2.ml.ROW_SAMPLE, label)
 
 # 웹캠을 열어준다. pc의 경우 0
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 
 
 while cap.isOpened():
@@ -96,7 +96,7 @@ while cap.isOpened():
             if idx == -8 : 
                 temp = fdist(res.landmark[4].x, res.landmark[4].y, res.landmark[8].x, res.landmark[8].y)
 
-                dis = round(temp*500)
+                dis = round(temp*1000)
                 if dis > 255:
                     dis = 256
                 if dis < 5:
