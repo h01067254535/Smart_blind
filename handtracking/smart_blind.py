@@ -15,6 +15,7 @@ create_idx = [0,0,0,0,0,0,0,0]
 rps_gesture = {0:'stop', -1:'one', -2:'two', -3:'three', -4:'four', -5:'five', -6:'up', -7:'down', -8:'brightness control'}
 
 before_data = 0
+before_gdata = 0
 ser = serial.Serial('COM12',9600)
 print("아두이노아 통신 시작")
 # MediaPipe hands model
@@ -96,10 +97,10 @@ while cap.isOpened():
             if idx == -8 : 
                 temp = fdist(res.landmark[4].x, res.landmark[4].y, res.landmark[8].x, res.landmark[8].y)
 
-                dis = round(temp*1000)
+                dis = round(temp*2000)
                 if dis > 255:
                     dis = 256
-                if dis < 5:
+                if dis < 15:
                     dis = 1
             
 
@@ -108,8 +109,13 @@ while cap.isOpened():
                     fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1,
                     color=255, thickness=2)
                 cv2.putText(img, text=rps_gesture[idx].upper(), org=(int(res.landmark[0].x * img.shape[1]), int(res.landmark[0].y * img.shape[0] + 20)), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(255, 255, 255), thickness=2)
-                print((str(dis) + '\n').encode('utf-8'))
-                ser.write((str(dis) + '\n').encode('utf-8'))
+                #print((str(dis) + '\n').encode('utf-8'))
+                if before_gdata != dis: 
+                    before_gdata = dis
+                    print((str(dis) + '\n').encode('utf-8'))
+                    ser.write((str(dis) + '\n').encode('utf-8'))
+                        
+                #ser.write((str(dis) + '\n').encode('utf-8'))
                 
 
             else:
@@ -149,12 +155,12 @@ while cap.isOpened():
                                     print('데이터:{0}'.format(data))
                                     ser.write(data)
                         
-                        before_data = idx 
+                        #before_data = idx 
             # Other gestures
             #cv2.putText(img, text=gesture[idx].upper(), org=(int(res.landmark[0].x * img.shape[1]), int(res.landmark[0].y * img.shape[0] + 20)), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, color=(255, 255, 255), thickness=2)
 
             mp_drawing.draw_landmarks(img, res, mp_hands.HAND_CONNECTIONS)
 
-    cv2.imshow('Game', img)
+    cv2.imshow('Blind_CAM', img)
     if cv2.waitKey(1) == ord('q'):
         break

@@ -207,7 +207,7 @@ void loop()
     {
         while (Serial1.available())
         {
-            delay(85);
+            
             String data = Serial1.readString();
             Serial.println(data);
 
